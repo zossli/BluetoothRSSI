@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> listItems = new ArrayList<String>();
     private ArrayList<BluetoothDevice> macAddresses = new ArrayList<BluetoothDevice>();
     BluetoothAdapter mBluetoothAdapter;
-    private MyBTService myBTService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,20 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1,
                 listItems);
         listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new ListView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, final long id) {
-                Log.i(TAG, "Item was clicked id=" + position);
-                myBTService.connect(macAddresses.get(position),CON_SECURE);
-            }
-        });
-        findViewById(R.id.btnsend).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-               myBTService.write("hallo".getBytes());
-                Log.i(TAG, "onClick: send data");
-            }
-        });
+
         findViewById(R.id.btnSearch).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -127,8 +113,8 @@ public class MainActivity extends AppCompatActivity {
                         startActivityForResult(discoverableIntent, REQUEST_SCAN_MODE_CONNECTABLE);
                     }
                 } else {
-                    Log.i(TAG, "btnSearch clicked but already discovering");
-                }
+                mBluetoothAdapter.cancelDiscovery();
+                mBluetoothAdapter.startDiscovery();}
             }
         });
     }
@@ -136,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        myBTService = new MyBTService(this, mhandler);
 
     }
 
@@ -151,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "onReceive: Found Device: deviceName: " + deviceName + " device RSSI: " + rssi);
                 Log.i(TAG, "ACTION_FOUND");
 
-                addItems(deviceName + "", device);
+                addItems(deviceName + "", device, rssi);
 
             }
             if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
@@ -162,6 +147,11 @@ public class MainActivity extends AppCompatActivity {
             }
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.i(TAG, "ACTION_DISCOVERY_FINISHED");
+                if (!mBluetoothAdapter.isDiscovering()) {
+                    adapter.clear();
+                    macAddresses.clear();
+                    mBluetoothAdapter.startDiscovery();
+                }
             }
             if(BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
                 int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI,Short.MIN_VALUE);
@@ -171,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public void addItems(String deviceName, BluetoothDevice device) {
-        adapter.add(deviceName);
+    public void addItems(String deviceName, BluetoothDevice device, int RSSI) {
+        adapter.add(deviceName + "  ->  "+RSSI);
         macAddresses.add(device);
         adapter.notifyDataSetChanged();
 
@@ -198,32 +188,9 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        // Performing this check in onResume() covers the case in which BT was
-        // not enabled during onStart(), so we were paused to enable it...
-        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-        if (myBTService != null) {
-            // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (myBTService.getState() == myBTService.STATE_NONE) {
-                // Start the Bluetooth chat services
-                myBTService.start();
-            }
-        }
+
     }
 
-    public static final int STARTRUNNER = 100;
-    private BluetoothManager blManager;
-    @SuppressLint("HandlerLeak")
-    private final Handler mhandler = new Handler() {
-        @SuppressLint("WrongConstant")
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == STARTRUNNER) {
-                Log.i(TAG, "handleMessage: We got connected");
-                ((BluetoothSocket)msg.arg1).getRemoteDevice().ge
-            }
-        }
-
-    };
 
 
 }
