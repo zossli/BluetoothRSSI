@@ -92,15 +92,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!mBluetoothAdapter.isDiscovering()) {
                     mBluetoothAdapter.startDiscovery();
-                    if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-                        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-                        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3000);
-                        startActivityForResult(discoverableIntent, REQUEST_SCAN_MODE_CONNECTABLE);
-                    }
+
                 } else {
                     mBluetoothAdapter.cancelDiscovery();
                     mBluetoothAdapter.startDiscovery();
                 }
+                //if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+                Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+                startActivityForResult(discoverableIntent, REQUEST_SCAN_MODE_CONNECTABLE);
+                //}
             }
         });
     }
